@@ -1,0 +1,34 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+
+# Python (scripts/ only)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.python-version
+
+# Model weights — never commit. Downloaded via scripts/, GBs in size.
+/models/
+*.safetensors
+*.gguf
+*.bin
+
+# Reference fixtures — regenerate with scripts/dump_reference.py.
+# The logits array alone is seq × 151936 × 4 bytes. Do not commit these.
+/tests/fixtures/**/*.npy
+
+# ...but keep the metadata, it's small and it documents what the fixtures were.
+!/tests/fixtures/**/meta.json
+
+# Benchmark output
+/bench-results/
+*.profraw
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
