@@ -1,125 +1,153 @@
-# Foundry
+<p align="center">
+  <img src="docs/readme/banner.svg" width="100%" alt="Foundry: a vocabulary grid where only a handful of legal tokens light up while valid JSON types itself out.">
+</p>
 
-**An LLM inference engine written from scratch, with grammar-constrained decoding.**
+<p align="center">
+  <b>Asking a model for JSON and retrying on failure is a prompt. This is a proof.</b><br>
+  <sub>An LLM inference engine written from scratch in Rust, with decoding constrained by a grammar. Malformed output is not unlikely. It is impossible.</sub>
+</p>
 
-No PyTorch. No `transformers`. No `llama.cpp`. No ONNX. Weights are read off disk,
-the transformer forward pass is implemented by hand, and the output is constrained
-by a state machine compiled from a grammar — so malformed output is not unlikely,
-it is *impossible*.
+<p align="center">
+  <sub>
+    <a href="#overview">OVERVIEW</a> &nbsp;·&nbsp;
+    <a href="#quick-start">QUICK START</a> &nbsp;·&nbsp;
+    <a href="#how-it-works">HOW IT WORKS</a> &nbsp;·&nbsp;
+    <a href="#every-stage-has-an-oracle">ORACLES</a> &nbsp;·&nbsp;
+    <a href="#results">RESULTS</a> &nbsp;·&nbsp;
+    <a href="#status">STATUS</a>
+  </sub>
+</p>
 
-> **Status:** pre-week-1. Nothing is built yet. See [docs/ROADMAP.md](docs/ROADMAP.md).
+<br>
 
----
+<table>
+  <tr>
+    <td><sub>NOT USED</sub><br><b>PyTorch · transformers · llama.cpp · ONNX</b></td>
+    <td><sub>MODEL</sub><br><b>Qwen2.5-0.5B-Instruct</b></td>
+    <td><sub>VALID JSON</sub><br><b>500 / 500</b></td>
+    <td><sub>LOGIT PARITY</sub><br><b>1.48e-6</b></td>
+  </tr>
+</table>
 
-## The two halves
+## Overview
 
-**1. The engine.** Load `safetensors` weights directly, implement byte-level BPE
-tokenization, the Qwen2 forward pass (RMSNorm, RoPE, grouped-query attention with a
-KV cache, SwiGLU MLP), sampling, and int8 weight quantization. The only dependencies
-are for file I/O and JSON parsing — every tensor operation is ours.
+Foundry has two halves.
 
-**2. Constrained decoding.** Compile a JSON Schema or EBNF grammar into a DFA over
-*bytes*, intersect that DFA with the tokenizer vocabulary to precompute the legal
-token set at each state, and mask the logits before sampling. The model can only emit
-tokens that keep the output on a path to a valid parse.
+**The engine.** Weights are read straight from `safetensors`. Tokenisation, the Qwen2 forward pass (RMSNorm, rotary embeddings, grouped-query attention with a KV cache, a SwiGLU MLP), sampling and int8 quantisation are all written by hand. The only dependencies are for file I/O and JSON parsing.
 
-The second half is the interesting one. "Ask the model for JSON and retry on failure"
-is a prompt. This is a proof.
+**Constrained decoding.** A grammar is compiled into a state machine, and every logit that could break it is masked before sampling. This is the half that matters.
 
----
+## Quick start
 
-## Why it's built this way
+The model files (about 1 GB) go in `models/qwen2.5-0.5b/`. [`docs/MODEL.md`](docs/MODEL.md) says where to get them.
 
-Every stage of this project has an **objective oracle**:
+```bash
+cargo test --release                              # 95 tests
 
-| Stage | The thing that says you're wrong |
+cargo run --release -p cli -- --chat --prompt "Give me a person: name, age, city." \
+  --schema '{"type":"object","properties":{"name":{"type":"string","maxLength":16},"age":{"type":"integer"},"city":{"type":"string","maxLength":16}}}'
+```
+
+> [!TIP]
+> No checkpoint? The constrained decoder runs on its own: `cargo test -p grammar`, or `cargo run -p grammar --bin demo -- --tokenizer path/to/tokenizer.json`.
+
+## How it works
+
+```mermaid
+flowchart LR
+    g["JSON Schema<br/>or EBNF"] --> dfa["DFA over bytes"]
+    v["151,665-token<br/>vocabulary"] --> idx
+    dfa --> idx["precomputed index<br/>state → legal tokens"]
+    m["model logits"] --> mask(("mask"))
+    idx --> mask
+    mask --> s["sample"] --> adv["advance the DFA"]
+    adv -- "next state" --> mask
+```
+
+1. The grammar compiles into a deterministic automaton over **bytes**.
+2. That automaton is intersected with the tokenizer's vocabulary ahead of time, giving, for every state, the set of tokens that keep the output on a path to a valid parse.
+3. At each decoding step, every other logit is masked out.
+
+The model never gets the chance to be wrong.
+
+> [!IMPORTANT]
+> **Why bytes, not characters.** The tokenizer is byte-level BPE, so a character like `é` or `₹` is routinely split across two or three tokens, and a token's bytes are often not valid UTF-8 on their own. A DFA that steps on characters cannot even ask whether such a token is legal. One that steps on bytes always can.
+
+## Every stage has an oracle
+
+There is no stage where "it looks about right" is accepted.
+
+| Stage | What says you are wrong |
 |---|---|
-| Forward pass | Logits must match HuggingFace reference within `1e-4` |
-| Each layer | Per-layer activations must match reference dumps |
-| Tokenizer | Round-trip and ID-parity against `tokenizer.json` |
-| Quantization | Perplexity delta on a held-out corpus |
+| Forward pass | Logits must match the HuggingFace reference |
+| Each layer | Activations must match reference dumps |
+| Tokenizer | ID parity against `tokenizer.json` |
+| KV cache | Incremental decode must be bit-identical to a fresh pass |
+| Quantisation | Perplexity delta on held-out text |
 | Constrained decoding | 100% of generations must parse. Not 99%. |
 
-There is no stage where "it looks about right" is an acceptable answer. That is a
-deliberate design property of the project, not a coincidence — see
-[docs/TESTING.md](docs/TESTING.md).
-
----
-
-## How it's actually built
-
-Claude writes the code, module by module. Before each module is written, Kalyan
-explains its logic out loud from having learned it. After it's written and its tests
-pass, he's quizzed closed-book — recall, "why not the alternative," and at least one
-question requiring him to compute a shape or a size. A module isn't done until the
-quiz passes, regardless of whether the code already does. Every quiz result is logged
-in [docs/QUIZ_LOG.md](docs/QUIZ_LOG.md). Full rationale in
-[docs/DECISIONS.md](docs/DECISIONS.md) D10.
-
----
+Python appears in exactly one place, `scripts/`, which dumps reference activations *from* HuggingFace so the engine can be checked *against* them. It never touches the inference path.
 
 ## Results
 
-Filled in during week 4. Numbers here must be reproducible via `scripts/bench.sh`.
+Apple M5, 10 cores, 16 GB. Ten timed runs after three warm-ups, 512-token prompt, 128 generated tokens. Methodology in [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 
-| Metric | Foundry | Baseline | Notes |
-|---|---|---|---|
-| Logit parity vs. HF (max abs err) | — | — | target `< 1e-4` |
-| Prefill throughput (tok/s) | — | llama.cpp | same model, same machine |
-| Decode throughput (tok/s) | — | llama.cpp | |
-| Peak RSS, fp32 | — | — | |
-| Peak RSS, int8 | — | — | |
-| Perplexity delta, fp32 → int8 | — | — | wikitext-2 subset |
-| Valid JSON, constrained | — | — | target 100% |
-| Valid JSON, prompted only | — | — | the comparison that matters |
-| Masking overhead (tok/s) | — | — | cost of the guarantee |
+| Metric | f32 | int8 |
+|---|---|---|
+| Logit parity vs. HuggingFace | **1.48e-6** | |
+| Tokenizer ID parity | **42 / 42** | |
+| Constrained outputs that parse | **500 / 500** | |
+| Prefill (tok/s) | 20.61 | 17.12 |
+| Decode (tok/s) | 10.36 | 11.78 |
+| Weights in memory | 1,884.6 MB | **473.1 MB** (3.98× smaller) |
+| Perplexity change | | **+0.10%** |
+| llama.cpp comparison | not run | left empty rather than guessed |
 
----
+<details>
+<summary><b>Why int8 is slower to prefill but faster to decode</b></summary>
+<br>
 
-## Repo layout
+Dequantising on the fly adds a cast per element, which dominates prefill's large matrix multiplies. During decode, one token at a time, the smaller footprint wins on cache locality instead. "int8 is faster" is only true if you say which phase.
+
+</details>
+
+<details>
+<summary><b>Why the perplexity sample is 767 tokens, not 256</b></summary>
+<br>
+
+At 256 tokens the change read −0.17%, which would mean int8 beat f32. At 512 it read +0.11%, at 768 +0.10%. Below about 768 tokens even the sign is noise. The corpus is committed, so the result reproduces offline.
+
+</details>
+
+<details>
+<summary><b>Six real defects, found by hunting for them</b></summary>
+<br>
+
+A systematic bug hunt across all five crates found a reachable panic and a one-line JSON Schema that could stall the process for minutes, among six fixes. Each is written up in [`docs/DECISIONS.md`](docs/DECISIONS.md).
+
+</details>
+
+## Status
+
+The engine, grammar compiler and constrained generation work end to end on the real checkpoint, clippy clean. Still to do: the llama.cpp comparison, a measured masking overhead, and the long-form writeup.
+
+Every module was also gated on understanding: explained before it was written and defended closed-book afterwards. The record is in [`docs/QUIZ_LOG.md`](docs/QUIZ_LOG.md).
+
+<details>
+<summary><b>Layout and documents</b></summary>
+<br>
 
 ```
-foundry/
-├── crates/
-│   ├── tensor/       hand-written tensor ops, SIMD kernels, quantization
-│   ├── tokenizer/    byte-level BPE encode/decode
-│   ├── model/        Qwen2 forward pass, KV cache, sampling
-│   ├── grammar/      schema/EBNF → DFA → vocabulary index → logit mask
-│   └── cli/          the `foundry` binary
-├── docs/
-├── scripts/          reference dumping, benchmarks (Python allowed here only)
-└── tests/            parity fixtures and integration tests
+crates/tensor      hand-written tensor ops, SIMD, quantisation
+crates/tokenizer   byte-level BPE
+crates/model       the Qwen2 forward pass, KV cache, sampling
+crates/grammar     schema → DFA → vocabulary index → mask
+crates/cli         the binary, parity and perplexity tools
+scripts/           reference dumps and benchmarks
 ```
 
-Python is permitted in `scripts/` — that is where reference activations are dumped
-*from* HuggingFace so we can check ourselves *against* it. Python never appears in
-the inference path.
+[Architecture](docs/ARCHITECTURE.md) · [Model](docs/MODEL.md) · [Grammar](docs/GRAMMAR.md) · [Testing](docs/TESTING.md) · [Benchmarks](docs/BENCHMARKS.md) · [Decisions](docs/DECISIONS.md) · [Glossary](docs/GLOSSARY.md) · [Roadmap](docs/ROADMAP.md)
 
----
+</details>
 
-## Docs
-
-| Doc | What's in it |
-|---|---|
-| [DAY_ONE.md](docs/DAY_ONE.md) | **Start here.** The first session, step by step |
-| [ROADMAP.md](docs/ROADMAP.md) | Four weeks, with a hard checkpoint each Sunday |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Crate boundaries, tensor layout, KV cache design |
-| [MODEL.md](docs/MODEL.md) | Qwen2.5-0.5B spec, weight names, forward pass |
-| [GRAMMAR.md](docs/GRAMMAR.md) | Constrained decoding: the DFA, the vocab index, the hard parts |
-| [TESTING.md](docs/TESTING.md) | Oracles, parity harness, how to debug a wrong layer |
-| [BENCHMARKS.md](docs/BENCHMARKS.md) | Measurement methodology — read before quoting a number |
-| [DECISIONS.md](docs/DECISIONS.md) | Why Rust, why this model, why byte-level DFAs |
-| [GLOSSARY.md](docs/GLOSSARY.md) | Every term in this repo, defined |
-| [QUIZ_LOG.md](docs/QUIZ_LOG.md) | Per-module understanding checks — the real interview-readiness record |
-
----
-
-## Quickstart
-
-Not yet. This section gets written when `foundry run` produces a token.
-
----
-
-## License
-
-MIT
+<sub>MIT.</sub>
