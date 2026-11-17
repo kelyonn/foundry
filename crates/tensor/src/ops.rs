@@ -106,7 +106,17 @@ fn par_linear(xd: &[f32], wd: &[f32], m: usize, n: usize, k: usize, out: &mut [f
     }
 }
 
+/// Rows of `x` processed per tile. A tile of `TILE_M` rows of `x` (64 × 896 × 4 B ≈
+/// 229 KB) stays resident in L2 while each weight row is streamed past it, so a
+/// weight row is read from memory once per *tile* instead of once per *token*.
+/// For a 512-token prefill that is 8 passes over the weights instead of 512.
+const TILE_M: usize = 64;
+
 /// Compute output columns `[j_lo, j_hi)` into `out`, whose row stride is `out_n`.
+///
+/// Loop order is `i-tile → j → i`: the weight row `w_j` (≈3.5 KB) is hot in L1
+/// while the tile's rows of `x` stream through it. The previous `i → j` order
+/// re-read the entire weight chunk from memory for every token.
 #[allow(clippy::too_many_arguments)]
 fn dot_block(
     xd: &[f32],
@@ -119,51 +129,114 @@ fn dot_block(
     out: &mut [f32],
     out_n: usize,
 ) {
-    for i in 0..m {
-        let x_row = &xd[i * k..(i + 1) * k];
+    let dot = select_dot();
+    let mut i0 = 0;
+    while i0 < m {
+        let i1 = (i0 + TILE_M).min(m);
         for j in j_lo..j_hi {
             let w_row = &wd[j * k..(j + 1) * k];
-            // Accumulate in f64, then narrow once at the end.
-            //
-            // The first version of this accumulated in f32, on the reasoning that
-            // parity is measured against the reference and we should therefore do
-            // what the reference does. That was wrong twice over. The reference
-            // does *not* sum sequentially — torch dispatches to BLAS, which keeps
-            // several SIMD accumulators and so behaves much like pairwise
-            // summation. And a naive sequential f32 sum over k = 896 terms
-            // accumulates rounding error roughly with the number of terms, which
-            // measured 1.3e-4 on `q_proj` — right at the 1e-4 parity budget,
-            // before any of the other 23 layers had contributed anything.
-            //
-            // Both implementations are approximating the same exact value, so the
-            // way to agree with BLAS is to be *more* accurate than it, not to
-            // imitate its particular error. f64 costs throughput and buys three
-            // orders of magnitude of headroom; per hard rule 2 that is the right
-            // trade until parity passes.
-            // Four independent accumulators, so the CPU can keep four FMA chains
-            // in flight instead of serialising on one dependency. This *does*
-            // change the summation order versus a single accumulator — and in the
-            // direction of less error, since it is a step toward pairwise
-            // summation. Parity is re-run after this change, not assumed.
-            let mut a0 = 0.0f64;
-            let mut a1 = 0.0f64;
-            let mut a2 = 0.0f64;
-            let mut a3 = 0.0f64;
-            let chunks = k / 4;
-            for c in 0..chunks {
-                let b = c * 4;
-                a0 += x_row[b] as f64 * w_row[b] as f64;
-                a1 += x_row[b + 1] as f64 * w_row[b + 1] as f64;
-                a2 += x_row[b + 2] as f64 * w_row[b + 2] as f64;
-                a3 += x_row[b + 3] as f64 * w_row[b + 3] as f64;
+            for i in i0..i1 {
+                out[i * out_n + (j - j_lo)] = dot(&xd[i * k..(i + 1) * k], w_row);
             }
-            let mut acc = (a0 + a1) + (a2 + a3);
-            for t in chunks * 4..k {
-                acc += x_row[t] as f64 * w_row[t] as f64;
-            }
-            out[i * out_n + (j - j_lo)] = acc as f32;
         }
+        i0 = i1;
     }
+}
+
+type DotFn = fn(&[f32], &[f32]) -> f32;
+
+/// Pick the dot-product kernel once. `FOUNDRY_SCALAR=1` forces the scalar f64
+/// kernel so a before/after comparison can be run from one binary (hard rule 3:
+/// a speedup claim needs both numbers from the same harness).
+fn select_dot() -> DotFn {
+    static CHOICE: std::sync::OnceLock<DotFn> = std::sync::OnceLock::new();
+    *CHOICE.get_or_init(|| {
+        #[cfg(target_arch = "aarch64")]
+        if std::env::var_os("FOUNDRY_SCALAR").is_none() {
+            return dot_neon_safe;
+        }
+        dot_scalar
+    })
+}
+
+/// The reference kernel: f64 accumulation, four independent accumulators.
+///
+/// Why f64: a sequential f32 sum over k = 896 terms measured 1.3e-4 error on
+/// `q_proj` (D14) — the whole parity budget before layer 2. The reference (BLAS)
+/// does not sum sequentially either, so imitating its error is pointless; being
+/// more accurate than both is how you agree with it. Kept as the oracle that the
+/// SIMD kernel is tested against.
+pub fn dot_scalar(x_row: &[f32], w_row: &[f32]) -> f32 {
+    let k = x_row.len();
+    debug_assert_eq!(k, w_row.len());
+    let mut a0 = 0.0f64;
+    let mut a1 = 0.0f64;
+    let mut a2 = 0.0f64;
+    let mut a3 = 0.0f64;
+    let chunks = k / 4;
+    for c in 0..chunks {
+        let b = c * 4;
+        a0 += x_row[b] as f64 * w_row[b] as f64;
+        a1 += x_row[b + 1] as f64 * w_row[b + 1] as f64;
+        a2 += x_row[b + 2] as f64 * w_row[b + 2] as f64;
+        a3 += x_row[b + 3] as f64 * w_row[b + 3] as f64;
+    }
+    let mut acc = (a0 + a1) + (a2 + a3);
+    for t in chunks * 4..k {
+        acc += x_row[t] as f64 * w_row[t] as f64;
+    }
+    acc as f32
+}
+
+#[cfg(target_arch = "aarch64")]
+fn dot_neon_safe(x_row: &[f32], w_row: &[f32]) -> f32 {
+    assert_eq!(x_row.len(), w_row.len());
+    // SAFETY: NEON is mandatory on aarch64; lengths checked equal above.
+    unsafe { dot_neon(x_row, w_row) }
+}
+
+/// NEON kernel: 4 vector accumulators × 4 lanes = 16 independent partial sums,
+/// with f32 FMA inside a block and a flush to an f64 total every `BLOCK` elements.
+///
+/// The flush is the accuracy trick: rounding error of an f32 accumulator grows
+/// with the number of terms *it* has absorbed, so bounding each accumulator to
+/// `BLOCK / 16` terms keeps the error near the f64 kernel's while the hot loop
+/// stays pure f32 FMA at 16 elements per iteration.
+///
+/// # Safety
+/// `x_row.len() == w_row.len()`; all loads are within `[0, k16)` with `k16 <= k`.
+#[cfg(target_arch = "aarch64")]
+#[target_feature(enable = "neon")]
+unsafe fn dot_neon(x_row: &[f32], w_row: &[f32]) -> f32 {
+    use std::arch::aarch64::*;
+    const BLOCK: usize = 256;
+    let k = x_row.len();
+    let k16 = k / 16 * 16;
+    let xp = x_row.as_ptr();
+    let wp = w_row.as_ptr();
+    let mut total = 0.0f64;
+    let mut i = 0;
+    while i < k16 {
+        let end = (i + BLOCK).min(k16);
+        let mut a0 = vdupq_n_f32(0.0);
+        let mut a1 = vdupq_n_f32(0.0);
+        let mut a2 = vdupq_n_f32(0.0);
+        let mut a3 = vdupq_n_f32(0.0);
+        while i < end {
+            // SAFETY: i + 16 <= end <= k16 <= k.
+            a0 = vfmaq_f32(a0, vld1q_f32(xp.add(i)), vld1q_f32(wp.add(i)));
+            a1 = vfmaq_f32(a1, vld1q_f32(xp.add(i + 4)), vld1q_f32(wp.add(i + 4)));
+            a2 = vfmaq_f32(a2, vld1q_f32(xp.add(i + 8)), vld1q_f32(wp.add(i + 8)));
+            a3 = vfmaq_f32(a3, vld1q_f32(xp.add(i + 12)), vld1q_f32(wp.add(i + 12)));
+            i += 16;
+        }
+        let s = vaddq_f32(vaddq_f32(a0, a1), vaddq_f32(a2, a3));
+        total += vaddvq_f32(s) as f64;
+    }
+    for t in k16..k {
+        total += x_row[t] as f64 * w_row[t] as f64;
+    }
+    total as f32
 }
 
 /// Root-mean-square layer norm, applied per row.
@@ -328,6 +401,65 @@ mod tests {
                     "n={n} j={j}: got {}, want {}",
                     got.data()[j],
                     expected
+                );
+            }
+        }
+    }
+
+    /// The kernel actually used (NEON on aarch64) must agree with the f64 scalar
+    /// oracle to well inside the parity budget, across ragged lengths: below one
+    /// 16-wide step, exact multiples, multi-block (> 256), and with a scalar tail.
+    #[test]
+    fn selected_kernel_matches_the_f64_oracle() {
+        let dot = select_dot();
+        let mut seed = 0x1234_5678u32;
+        let mut rnd = || {
+            seed ^= seed << 13;
+            seed ^= seed >> 17;
+            seed ^= seed << 5;
+            (seed as f32 / u32::MAX as f32) * 2.0 - 1.0
+        };
+        for k in [
+            1usize, 3, 15, 16, 17, 31, 64, 255, 256, 257, 896, 4864, 4871,
+        ] {
+            let x: Vec<f32> = (0..k).map(|_| rnd()).collect();
+            let w: Vec<f32> = (0..k).map(|_| rnd()).collect();
+            let want = dot_scalar(&x, &w);
+            let got = dot(&x, &w);
+            let scale: f32 = x
+                .iter()
+                .zip(&w)
+                .map(|(a, b)| (a * b).abs())
+                .sum::<f32>()
+                .max(1.0);
+            assert!(
+                (got - want).abs() <= 1e-6 * scale,
+                "k={k}: got {got}, want {want}, scale {scale}"
+            );
+        }
+    }
+
+    /// A batch larger than `TILE_M` exercises the tile boundary in `dot_block`.
+    #[test]
+    fn linear_is_correct_across_tile_boundaries() {
+        let (m, n, k) = (TILE_M * 2 + 5, 9, 20);
+        let x = Tensor::new(
+            (0..m * k).map(|i| ((i % 7) as f32) - 3.0).collect(),
+            vec![m, k],
+        );
+        let w = Tensor::new(
+            (0..n * k).map(|i| ((i % 5) as f32) - 2.0).collect(),
+            vec![n, k],
+        );
+        let y = linear(&x, &w, None);
+        for i in 0..m {
+            for j in 0..n {
+                let want: f64 = (0..k)
+                    .map(|t| x.data()[i * k + t] as f64 * w.data()[j * k + t] as f64)
+                    .sum();
+                assert!(
+                    (y.data()[i * n + j] as f64 - want).abs() < 1e-3,
+                    "i={i} j={j}"
                 );
             }
         }

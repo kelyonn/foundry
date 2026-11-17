@@ -194,6 +194,8 @@ fn par_linear_q(
     }
 }
 
+/// Same `i-tile → j → i` order as `ops::dot_block`: the int8 weight row (896 B) stays
+/// in L1 while a tile of activation rows streams through it.
 #[allow(clippy::too_many_arguments)]
 fn dot_block_q(
     xd: &[f32],
@@ -206,41 +208,142 @@ fn dot_block_q(
     out: &mut [f32],
     out_n: usize,
 ) {
-    for i in 0..m {
-        let x_row = &xd[i * k..(i + 1) * k];
+    const TILE_M: usize = 64;
+    let dot = select_dot_q();
+    let mut i0 = 0;
+    while i0 < m {
+        let i1 = (i0 + TILE_M).min(m);
         for j in j_lo..j_hi {
             let w_row = &wd[j * k..(j + 1) * k];
-            // f32 accumulation is fine here, unlike the f32 path: the weights are
-            // already quantized to 8 bits, so the dominant error is the
-            // quantization itself — roughly 1e-3 relative — and it swamps any
-            // accumulation rounding by three orders of magnitude. Paying for f64
-            // would buy precision that the input does not have.
-            let mut a0 = 0.0f32;
-            let mut a1 = 0.0f32;
-            let mut a2 = 0.0f32;
-            let mut a3 = 0.0f32;
-            let chunks = k / 4;
-            for c in 0..chunks {
-                let b = c * 4;
-                a0 += x_row[b] * w_row[b] as f32;
-                a1 += x_row[b + 1] * w_row[b + 1] as f32;
-                a2 += x_row[b + 2] * w_row[b + 2] as f32;
-                a3 += x_row[b + 3] * w_row[b + 3] as f32;
+            for i in i0..i1 {
+                // Scale once per output element, after the dot product.
+                out[i * out_n + (j - j_lo)] = dot(&xd[i * k..(i + 1) * k], w_row) * scales[j];
             }
-            let mut acc = (a0 + a1) + (a2 + a3);
-            for t in chunks * 4..k {
-                acc += x_row[t] * w_row[t] as f32;
-            }
-            // Scale once per output element, after the integer dot product.
-            out[i * out_n + (j - j_lo)] = acc * scales[j];
         }
+        i0 = i1;
     }
+}
+
+type DotQFn = fn(&[f32], &[i8]) -> f32;
+
+fn select_dot_q() -> DotQFn {
+    static CHOICE: std::sync::OnceLock<DotQFn> = std::sync::OnceLock::new();
+    *CHOICE.get_or_init(|| {
+        #[cfg(target_arch = "aarch64")]
+        if std::env::var_os("FOUNDRY_SCALAR").is_none() {
+            return dot_q_neon_safe;
+        }
+        dot_q_scalar
+    })
+}
+
+/// Scalar reference. f32 accumulation is fine here, unlike the f32 path: the weights
+/// are already quantized to 8 bits, so the dominant error is the quantization itself
+/// (~1e-3 relative) and it swamps accumulation rounding by three orders of magnitude.
+pub fn dot_q_scalar(x_row: &[f32], w_row: &[i8]) -> f32 {
+    let k = x_row.len();
+    let mut a0 = 0.0f32;
+    let mut a1 = 0.0f32;
+    let mut a2 = 0.0f32;
+    let mut a3 = 0.0f32;
+    let chunks = k / 4;
+    for c in 0..chunks {
+        let b = c * 4;
+        a0 += x_row[b] * w_row[b] as f32;
+        a1 += x_row[b + 1] * w_row[b + 1] as f32;
+        a2 += x_row[b + 2] * w_row[b + 2] as f32;
+        a3 += x_row[b + 3] * w_row[b + 3] as f32;
+    }
+    let mut acc = (a0 + a1) + (a2 + a3);
+    for t in chunks * 4..k {
+        acc += x_row[t] * w_row[t] as f32;
+    }
+    acc
+}
+
+#[cfg(target_arch = "aarch64")]
+fn dot_q_neon_safe(x_row: &[f32], w_row: &[i8]) -> f32 {
+    assert_eq!(x_row.len(), w_row.len());
+    // SAFETY: NEON is mandatory on aarch64; lengths checked equal above.
+    unsafe { dot_q_neon(x_row, w_row) }
+}
+
+/// NEON int8 kernel, 16 weights per step: load 16 × i8, sign-extend i8→i16→i32,
+/// convert to f32, FMA against 4 loads of `x`. The conversions are the cost of
+/// weight-only quantization — they are why int8 saves memory and bandwidth but
+/// not arithmetic (the module doc says so; this is where it is visible).
+///
+/// # Safety
+/// `x_row.len() == w_row.len()`; loads are within `[0, k16)` with `k16 <= k`.
+#[cfg(target_arch = "aarch64")]
+#[target_feature(enable = "neon")]
+unsafe fn dot_q_neon(x_row: &[f32], w_row: &[i8]) -> f32 {
+    use std::arch::aarch64::*;
+    let k = x_row.len();
+    let k16 = k / 16 * 16;
+    let xp = x_row.as_ptr();
+    let wp = w_row.as_ptr();
+    let mut a0 = vdupq_n_f32(0.0);
+    let mut a1 = vdupq_n_f32(0.0);
+    let mut a2 = vdupq_n_f32(0.0);
+    let mut a3 = vdupq_n_f32(0.0);
+    let mut i = 0;
+    while i < k16 {
+        // SAFETY: i + 16 <= k16 <= k.
+        let w16 = vld1q_s8(wp.add(i));
+        let lo = vmovl_s8(vget_low_s8(w16));
+        let hi = vmovl_s8(vget_high_s8(w16));
+        let f0 = vcvtq_f32_s32(vmovl_s16(vget_low_s16(lo)));
+        let f1 = vcvtq_f32_s32(vmovl_s16(vget_high_s16(lo)));
+        let f2 = vcvtq_f32_s32(vmovl_s16(vget_low_s16(hi)));
+        let f3 = vcvtq_f32_s32(vmovl_s16(vget_high_s16(hi)));
+        a0 = vfmaq_f32(a0, vld1q_f32(xp.add(i)), f0);
+        a1 = vfmaq_f32(a1, vld1q_f32(xp.add(i + 4)), f1);
+        a2 = vfmaq_f32(a2, vld1q_f32(xp.add(i + 8)), f2);
+        a3 = vfmaq_f32(a3, vld1q_f32(xp.add(i + 12)), f3);
+        i += 16;
+    }
+    let mut acc = vaddvq_f32(vaddq_f32(vaddq_f32(a0, a1), vaddq_f32(a2, a3)));
+    for t in k16..k {
+        acc += x_row[t] * w_row[t] as f32;
+    }
+    acc
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::ops::linear;
+
+    #[test]
+    fn selected_q_kernel_matches_the_scalar_one() {
+        let dot = select_dot_q();
+        let mut seed = 0x9e37_79b9u32;
+        let mut rnd = || {
+            seed ^= seed << 13;
+            seed ^= seed >> 17;
+            seed ^= seed << 5;
+            seed
+        };
+        for k in [1usize, 5, 15, 16, 17, 33, 255, 896, 4871] {
+            let x: Vec<f32> = (0..k)
+                .map(|_| (rnd() % 2001) as f32 / 1000.0 - 1.0)
+                .collect();
+            let w: Vec<i8> = (0..k).map(|_| (rnd() % 256) as u8 as i8).collect();
+            let want = dot_q_scalar(&x, &w);
+            let got = dot(&x, &w);
+            let scale: f32 = x
+                .iter()
+                .zip(&w)
+                .map(|(a, b)| (a * *b as f32).abs())
+                .sum::<f32>()
+                .max(1.0);
+            assert!(
+                (got - want).abs() <= 1e-5 * scale,
+                "k={k}: got {got}, want {want}"
+            );
+        }
+    }
 
     #[test]
     fn round_trip_error_is_bounded_by_half_a_step() {

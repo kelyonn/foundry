@@ -440,5 +440,64 @@ number-picking this project's testing philosophy exists to rule out.
 
 ---
 
-### D21 — *(next decision goes here)*
+### D21 — The quiz-gated loop is waived for the final push
+**decided** — 2026-11-17
+
+Kalyan asked for the remaining work (SIMD, llama.cpp comparison, typed errors,
+writeup, demo) to be finished end to end without being kept in the loop, and said
+to skip the "I write, you review" step. D10's per-module quiz gate and
+`QUIZ_LOG.md` entries are therefore **not** run for the modules touched here
+(thread pool, NEON kernels, error types). The substitute is `docs/explainers/`:
+one interview-oriented explainer per module with worked shape/size calculations
+and likely questions. That is study material, not proof of understanding — the
+non-negotiable line in CLAUDE.md (he must be able to answer unaided) still stands
+and the spot-check before any interview is still owed.
+
+*Rejected:* quietly marking modules as quizzed, or leaving the QUIZ_LOG implying
+these were gated.
+
+---
+
+### D22 — Persistent worker pool instead of per-call `thread::scope`
+**decided** — 2026-11-17
+
+`crates/tensor/src/pool.rs`: std-only pool (mutex + condvar, caller participates,
+submissions serialised, task panics propagated after all tasks finish). Replaces
+the per-matmul thread spawns that CLAUDE.md flagged as the known decode
+inefficiency. Same column split as D16, so output is unchanged: parity stayed at
+exactly 1.482e-6 after this change alone (before the SIMD work).
+The lifetime-erased closure pointer is the one `unsafe` here; the invariant is
+documented at `Job` (caller blocks until `finished == total`).
+
+*Rejected:* `rayon` (fine under rule 1 but breaks the zero-dependency tensor
+crate and hides the very thing worth explaining); a lock-free queue (more code,
+no measurable win at ~170 jobs/token).
+
+---
+
+### D23 — Tiled loop order + NEON kernels; scalar f64 kept as the oracle
+**decided** — 2026-11-17
+
+Two separate changes, measured together with `FOUNDRY_SCALAR=1` as the A/B switch
+(same binary, same harness):
+1. **Loop order** `i → j` became `i-tile(64) → j → i`. The old order re-streamed
+   the whole weight chunk from memory for every token; the new one reads weights
+   once per 64-token tile (8 passes instead of 512 at prefill).
+2. **NEON dot kernels** (`std::arch::aarch64`, 4 vector accumulators). f32 path
+   does f32 FMA inside 256-element blocks and flushes each block into an f64 total
+   — keeping error near the f64 kernel's. int8 widens i8→i16→i32→f32 then FMAs.
+
+Parity after: relative 1.78e-6 (was 1.48e-6), argmax agrees, inside the 5e-5
+gate. It is no longer bit-identical to the scalar kernel and is not meant to be:
+unit tests compare the selected kernel to `dot_scalar` / `dot_q_scalar` across
+ragged lengths. Non-aarch64 builds fall back to the scalar kernels.
+
+*Rejected:* Accelerate/BLAS (an ML-adjacent dependency, banned by rule 1 in
+spirit and it would make the comparison against llama.cpp meaningless);
+activation quantization + `sdot` (changes numerics beyond weight-only int8 —
+a real next step, not a quiet change here).
+
+---
+
+### D24 — *(next decision goes here)*
 **open**
