@@ -1,0 +1,1774 @@
+{
+  "model": "models/qwen2.5-0.5b",
+  "prompt": "The capital of France is",
+  "templated_text": "The capital of France is",
+  "used_chat_template": false,
+  "token_ids": [
+    785,
+    6722,
+    315,
+    9625,
+    374
+  ],
+  "seq_len": 5,
+  "config": {
+    "hidden_size": 896,
+    "intermediate_size": 4864,
+    "num_hidden_layers": 24,
+    "num_attention_heads": 14,
+    "num_key_value_heads": 2,
+    "vocab_size": 151936,
+    "rms_norm_eps": 1e-06,
+    "rope_theta": null,
+    "tie_word_embeddings": true,
+    "hidden_act": "silu",
+    "head_dim": 64
+  },
+  "shapes": {
+    "embed_out": [
+      1,
+      5,
+      896
+    ],
+    "layer00.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer00.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer00.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer00.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer00.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer00.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer00.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer00.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer00.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer00.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer00.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer00.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer01.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer01.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer01.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer01.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer01.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer01.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer01.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer01.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer01.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer01.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer01.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer01.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer02.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer02.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer02.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer02.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer02.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer02.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer02.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer02.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer02.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer02.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer02.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer02.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer03.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer03.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer03.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer03.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer03.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer03.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer03.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer03.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer03.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer03.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer03.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer03.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer04.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer04.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer04.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer04.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer04.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer04.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer04.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer04.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer04.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer04.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer04.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer04.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer05.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer05.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer05.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer05.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer05.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer05.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer05.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer05.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer05.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer05.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer05.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer05.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer06.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer06.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer06.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer06.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer06.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer06.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer06.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer06.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer06.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer06.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer06.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer06.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer07.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer07.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer07.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer07.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer07.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer07.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer07.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer07.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer07.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer07.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer07.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer07.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer08.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer08.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer08.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer08.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer08.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer08.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer08.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer08.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer08.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer08.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer08.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer08.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer09.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer09.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer09.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer09.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer09.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer09.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer09.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer09.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer09.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer09.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer09.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer09.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer10.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer10.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer10.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer10.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer10.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer10.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer10.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer10.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer10.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer10.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer10.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer10.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer11.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer11.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer11.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer11.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer11.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer11.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer11.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer11.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer11.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer11.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer11.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer11.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer12.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer12.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer12.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer12.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer12.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer12.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer12.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer12.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer12.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer12.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer12.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer12.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer13.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer13.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer13.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer13.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer13.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer13.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer13.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer13.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer13.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer13.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer13.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer13.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer14.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer14.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer14.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer14.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer14.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer14.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer14.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer14.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer14.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer14.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer14.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer14.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer15.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer15.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer15.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer15.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer15.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer15.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer15.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer15.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer15.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer15.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer15.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer15.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer16.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer16.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer16.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer16.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer16.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer16.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer16.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer16.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer16.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer16.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer16.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer16.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer17.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer17.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer17.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer17.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer17.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer17.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer17.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer17.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer17.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer17.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer17.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer17.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer18.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer18.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer18.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer18.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer18.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer18.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer18.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer18.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer18.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer18.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer18.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer18.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer19.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer19.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer19.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer19.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer19.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer19.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer19.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer19.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer19.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer19.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer19.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer19.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer20.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer20.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer20.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer20.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer20.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer20.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer20.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer20.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer20.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer20.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer20.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer20.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer21.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer21.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer21.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer21.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer21.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer21.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer21.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer21.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer21.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer21.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer21.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer21.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer22.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer22.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer22.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer22.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer22.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer22.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer22.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer22.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer22.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer22.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer22.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer22.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "layer23.input_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer23.q_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer23.k_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer23.v_proj": [
+      1,
+      5,
+      128
+    ],
+    "layer23.o_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer23.attn_out": [
+      1,
+      5,
+      896
+    ],
+    "layer23.post_attention_layernorm": [
+      1,
+      5,
+      896
+    ],
+    "layer23.gate_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer23.up_proj": [
+      1,
+      5,
+      4864
+    ],
+    "layer23.down_proj": [
+      1,
+      5,
+      896
+    ],
+    "layer23.mlp_out": [
+      1,
+      5,
+      896
+    ],
+    "layer23.layer_out": [
+      1,
+      5,
+      896
+    ],
+    "final_norm": [
+      1,
+      5,
+      896
+    ],
+    "layer00.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer01.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer02.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer03.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer04.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer05.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer06.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer07.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer08.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer09.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer10.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer11.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer12.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer13.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer14.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer15.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer16.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer17.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer18.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer19.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer20.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer21.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer22.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer23.rope_q": [
+      1,
+      14,
+      5,
+      64
+    ],
+    "layer00.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer01.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer02.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer03.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer04.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer05.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer06.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer07.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer08.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer09.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer10.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer11.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer12.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer13.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer14.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer15.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer16.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer17.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer18.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer19.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer20.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer21.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer22.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "layer23.rope_k": [
+      1,
+      2,
+      5,
+      64
+    ],
+    "tokens": [
+      5
+    ],
+    "logits": [
+      5,
+      151936
+    ]
+  }
+}

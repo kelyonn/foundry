@@ -1,0 +1,16 @@
+[package]
+name = "model"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+# Per docs/RULES.md hard rule 1: memory mapping and JSON parsing are permitted, tensor
+# operations are not. `memmap2` maps the weight file; `serde_json` parses the
+# safetensors header and config.json. Neither touches a number.
+[dependencies]
+tensor = { path = "../tensor" }
+memmap2 = "0.9"
+serde_json = "1"
+
+[dev-dependencies]
+tensor = { path = "../tensor" }

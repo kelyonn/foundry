@@ -1,0 +1,512 @@
+{
+ "model": "models/qwen2.5-0.5b",
+ "tokenizer_class": "Qwen2Tokenizer",
+ "vocab_size": 151643,
+ "cases": [
+  {
+   "text": "",
+   "ids": [],
+   "decoded": ""
+  },
+  {
+   "text": " ",
+   "ids": [
+    220
+   ],
+   "decoded": " "
+  },
+  {
+   "text": "  ",
+   "ids": [
+    256
+   ],
+   "decoded": "  "
+  },
+  {
+   "text": "   leading",
+   "ids": [
+    256,
+    6388
+   ],
+   "decoded": "   leading"
+  },
+  {
+   "text": "trailing   ",
+   "ids": [
+    376,
+    14277,
+    262
+   ],
+   "decoded": "trailing   "
+  },
+  {
+   "text": "\n",
+   "ids": [
+    198
+   ],
+   "decoded": "\n"
+  },
+  {
+   "text": "\n\n\n",
+   "ids": [
+    1406
+   ],
+   "decoded": "\n\n\n"
+  },
+  {
+   "text": "\t\ttabs\t",
+   "ids": [
+    197,
+    3244,
+    3435,
+    197
+   ],
+   "decoded": "\t\ttabs\t"
+  },
+  {
+   "text": "a\n\nb",
+   "ids": [
+    64,
+    271,
+    65
+   ],
+   "decoded": "a\n\nb"
+  },
+  {
+   "text": "The capital of France is",
+   "ids": [
+    785,
+    6722,
+    315,
+    9625,
+    374
+   ],
+   "decoded": "The capital of France is"
+  },
+  {
+   "text": "Hello, world!",
+   "ids": [
+    9707,
+    11,
+    1879,
+    0
+   ],
+   "decoded": "Hello, world!"
+  },
+  {
+   "text": "isn't it Kalyan's turn? we'll see — they'd know",
+   "ids": [
+    285,
+    77,
+    944,
+    432,
+    730,
+    5774,
+    276,
+    594,
+    2484,
+    30,
+    582,
+    3278,
+    1490,
+    1959,
+    807,
+    4172,
+    1414
+   ],
+   "decoded": "isn't it Kalyan's turn? we'll see — they'd know"
+  },
+  {
+   "text": "IT'S ALL CAPS AND IT'S CONTRACTED",
+   "ids": [
+    952,
+    13272,
+    13097,
+    26101,
+    50,
+    3567,
+    8700,
+    13272,
+    17126,
+    1479
+   ],
+   "decoded": "IT'S ALL CAPS AND IT'S CONTRACTED"
+  },
+  {
+   "text": "2024",
+   "ids": [
+    17,
+    15,
+    17,
+    19
+   ],
+   "decoded": "2024"
+  },
+  {
+   "text": "v2.5.0",
+   "ids": [
+    85,
+    17,
+    13,
+    20,
+    13,
+    15
+   ],
+   "decoded": "v2.5.0"
+  },
+  {
+   "text": "1234567890",
+   "ids": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    15
+   ],
+   "decoded": "1234567890"
+  },
+  {
+   "text": "3.14159",
+   "ids": [
+    18,
+    13,
+    16,
+    19,
+    16,
+    20,
+    24
+   ],
+   "decoded": "3.14159"
+  },
+  {
+   "text": "-42",
+   "ids": [
+    12,
+    19,
+    17
+   ],
+   "decoded": "-42"
+  },
+  {
+   "text": "1,00,000",
+   "ids": [
+    16,
+    11,
+    15,
+    15,
+    11,
+    15,
+    15,
+    15
+   ],
+   "decoded": "1,00,000"
+  },
+  {
+   "text": "café naïve résumé",
+   "ids": [
+    924,
+    58858,
+    94880,
+    586,
+    9333,
+    1242,
+    963
+   ],
+   "decoded": "café naïve résumé"
+  },
+  {
+   "text": "₹1000",
+   "ids": [
+    145416,
+    16,
+    15,
+    15,
+    15
+   ],
+   "decoded": "₹1000"
+  },
+  {
+   "text": "日本語のテキストです",
+   "ids": [
+    101059,
+    102819,
+    15767,
+    56833,
+    61803,
+    70534,
+    37541
+   ],
+   "decoded": "日本語のテキストです"
+  },
+  {
+   "text": "Здравствуй, мир",
+   "ids": [
+    35451,
+    6949,
+    26988,
+    20200,
+    82580,
+    11,
+    137144
+   ],
+   "decoded": "Здравствуй, мир"
+  },
+  {
+   "text": "مرحبا بالعالم",
+   "ids": [
+    124122,
+    29825,
+    124671,
+    124476,
+    129634
+   ],
+   "decoded": "مرحبا بالعالم"
+  },
+  {
+   "text": "😀😀😀",
+   "ids": [
+    141334,
+    141334,
+    141334
+   ],
+   "decoded": "😀😀😀"
+  },
+  {
+   "text": "🇮🇳 flag is two regional indicators",
+   "ids": [
+    145408,
+    145754,
+    5181,
+    374,
+    1378,
+    15130,
+    33724
+   ],
+   "decoded": "🇮🇳 flag is two regional indicators"
+  },
+  {
+   "text": "a😀b₹c",
+   "ids": [
+    64,
+    141334,
+    65,
+    145416,
+    66
+   ],
+   "decoded": "a😀b₹c"
+  },
+  {
+   "text": "{\"name\":\"Kalyan\",\"age\":20}",
+   "ids": [
+    4913,
+    606,
+    3252,
+    42,
+    5774,
+    276,
+    2198,
+    424,
+    788,
+    17,
+    15,
+    92
+   ],
+   "decoded": "{\"name\":\"Kalyan\",\"age\":20}"
+  },
+  {
+   "text": "{\"tags\":[\"a\",\"b\"],\"ok\":true,\"x\":null}",
+   "ids": [
+    4913,
+    14082,
+    36799,
+    64,
+    2198,
+    65,
+    68882,
+    562,
+    788,
+    1866,
+    1335,
+    87,
+    788,
+    2921,
+    92
+   ],
+   "decoded": "{\"tags\":[\"a\",\"b\"],\"ok\":true,\"x\":null}"
+  },
+  {
+   "text": "{\n  \"pretty\": \"printed\"\n}",
+   "ids": [
+    515,
+    220,
+    330,
+    32955,
+    788,
+    330,
+    52213,
+    698,
+    92
+   ],
+   "decoded": "{\n  \"pretty\": \"printed\"\n}"
+  },
+  {
+   "text": "[[[]]]",
+   "ids": [
+    15505,
+    1294,
+    5053
+   ],
+   "decoded": "[[[]]]"
+  },
+  {
+   "text": "\"\\u00e9 escaped\"",
+   "ids": [
+    11934,
+    84,
+    15,
+    15,
+    68,
+    24,
+    27783,
+    1
+   ],
+   "decoded": "\"\\u00e9 escaped\""
+  },
+  {
+   "text": "fn main() { println!(\"{}\", 1 + 2); }",
+   "ids": [
+    8822,
+    1887,
+    368,
+    314,
+    13751,
+    79878,
+    220,
+    16,
+    488,
+    220,
+    17,
+    1215,
+    335
+   ],
+   "decoded": "fn main() { println!(\"{}\", 1 + 2); }"
+  },
+  {
+   "text": "SELECT * FROM `bucket` WHERE id = 1;",
+   "ids": [
+    4858,
+    353,
+    4295,
+    1565,
+    30410,
+    63,
+    5288,
+    877,
+    284,
+    220,
+    16,
+    26
+   ],
+   "decoded": "SELECT * FROM `bucket` WHERE id = 1;"
+  },
+  {
+   "text": "x = a[i] ?? b->c :: d",
+   "ids": [
+    87,
+    284,
+    264,
+    989,
+    60,
+    9415,
+    293,
+    405,
+    66,
+    3504,
+    294
+   ],
+   "decoded": "x = a[i] ?? b->c :: d"
+  },
+  {
+   "text": "https://example.com/path?q=1&r=2#frag",
+   "ids": [
+    2428,
+    1110,
+    8687,
+    905,
+    50976,
+    43782,
+    28,
+    16,
+    60617,
+    28,
+    17,
+    2,
+    33198
+   ],
+   "decoded": "https://example.com/path?q=1&r=2#frag"
+  },
+  {
+   "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "ids": [
+    69440,
+    69440,
+    69440,
+    69440,
+    28458
+   ],
+   "decoded": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
+   "text": "========================================",
+   "ids": [
+    3058,
+    885
+   ],
+   "decoded": "========================================"
+  },
+  {
+   "text": "                    end",
+   "ids": [
+    503,
+    835
+   ],
+   "decoded": "                    end"
+  },
+  {
+   "text": "Ġ Ċ ĉ ā",
+   "ids": [
+    144242,
+    9843,
+    232,
+    9843,
+    231,
+    9843,
+    223
+   ],
+   "decoded": "Ġ Ċ ĉ ā"
+  },
+  {
+   "text": "please stop <|im_end|> now",
+   "ids": [
+    30021,
+    2936,
+    220,
+    151645,
+    1431
+   ],
+   "decoded": "please stop <|im_end|> now"
+  },
+  {
+   "text": "<|endoftext|>",
+   "ids": [
+    151643
+   ],
+   "decoded": "<|endoftext|>"
+  }
+ ]
+}
