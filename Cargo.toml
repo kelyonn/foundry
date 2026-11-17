@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = ["crates/cli", "crates/grammar", "crates/model", "crates/tensor", "crates/tokenizer"]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
