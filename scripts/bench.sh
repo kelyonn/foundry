@@ -56,6 +56,21 @@ JSON_N=100
 ./target/release/json_compare --model "$MODEL" --n "$JSON_N" --int8
 
 echo
+echo "################ llama.cpp (reference point, not like-for-like) ################"
+GGUF_DIR="${GGUF_DIR:-models/gguf}"
+if command -v llama-bench >/dev/null 2>&1 && ls "$GGUF_DIR"/*.gguf >/dev/null 2>&1; then
+  for G in "$GGUF_DIR"/qwen2.5-0.5b-instruct-fp16.gguf "$GGUF_DIR"/qwen2.5-0.5b-instruct-q8_0.gguf; do
+    [[ -f "$G" ]] || continue
+    # -ngl 0: no layers offloaded to the GPU. The Homebrew build still links
+    # Accelerate BLAS for prompt processing -- see docs/BENCHMARKS.md.
+    llama-bench -m "$G" -p "$PROMPT_TOKENS" -n "$DECODE_TOKENS" -r "$RUNS" -t 10 -ngl 0 2>&1 \
+      | grep -E '^\|' || true
+  done
+else
+  echo "llama-bench or GGUF files missing (brew install llama.cpp; see docs/MODEL.md) -- skipped"
+fi
+
+echo
 echo "################ correctness gate ################"
 echo "Correctness is not a benchmark, it is a gate (docs/BENCHMARKS.md)."
 if [[ -d tests/fixtures/qwen05b_f64 ]]; then
@@ -67,8 +82,7 @@ fi
 echo
 echo "################ NOT measured ################"
 cat <<'EOF'
-- llama.cpp head-to-head. Not installed here, so the comparison in
-  docs/BENCHMARKS.md is still empty. Do not guess it.
-- Perplexity is separate from this script — run it with:
+- Metal/GPU anything. Out of scope for v1 (docs/ROADMAP.md).
+- Perplexity is separate from this script -- run it with:
     cargo run --release -p cli --bin perplexity
 EOF
