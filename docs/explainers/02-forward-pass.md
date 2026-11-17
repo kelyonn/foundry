@@ -64,7 +64,8 @@ about 1 GFLOP of work (arithmetic intensity ≈ 0.5 FLOP/byte).
 `cargo run --release --bin parity` compares every activation of all 24 layers against an
 f64 HuggingFace reference (`scripts/dump_reference.py --dtype float64`): final logits
 relative error **1.78e-6** after the NEON work (1.48e-6 with the scalar kernel); argmax
-agrees. Five real bugs were found by this harness (DECISIONS D14–D18) — read those before
+agrees. The harness is what localised the divergences found while bringing the forward pass up
+(CLAUDE.md summarises them; D17 and D18 hold the numerics reasoning) — read those before
 touching the forward pass.
 
 ## Questions
@@ -73,4 +74,4 @@ touching the forward pass.
 2. *What happens if RoPE offset is forgotten in decode?* Every new token thinks it is at position 0 — output stays fluent but wrong.
 3. *Compute:* KV cache bytes at ctx 4096? 24 × 2 × 2 × 4096 × 64 × 4 = 100,663,296 = **96 MiB** (MHA would be 672 MiB).
 4. *Why prenorm?* Residual stream stays un-normalised; trains stably at depth.
-5. *Why f64 accumulation in the reference kernel?* D14: f32 sequential sum cost 1.3e-4 on q_proj — the whole budget.
+5. *Why f64 accumulation in the reference kernel?* the comment on `dot_scalar` and D17: a sequential f32 sum measured 1.3e-4 on q_proj — the whole original budget.

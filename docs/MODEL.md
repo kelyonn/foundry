@@ -1,9 +1,8 @@
 # Target model — Qwen2.5-0.5B-Instruct
 
-> **Every number on this page is an expectation, not a fact.** They are written from
-> memory of the Qwen2 architecture and have **not** been verified against a downloaded
-> checkpoint. Task one of week 1 is to dump `config.json` and correct this file.
-> When the file on disk disagrees with this page, **the file is right**.
+> **Verified against the downloaded `config.json` and the safetensors header** (see
+> `cargo run -p model --bin inspect`). Hard rule 4 still applies: if the file on disk ever
+> disagrees with this page, **the file is right** and this page is wrong.
 
 ## Why this model
 
@@ -18,7 +17,7 @@
 Llama-3.2-1B is the stretch target. It differs mainly in vocab size, RoPE scaling, and
 the absence of QKV bias. Do not attempt it until v1 is complete.
 
-## Config — VERIFY ALL OF THESE
+## Config
 
 ```jsonc
 {
@@ -169,3 +168,15 @@ The instruct model expects Qwen's ChatML-style format. Read the exact template f
 
 Special token IDs (`<|im_start|>`, `<|im_end|>`, `<|endoftext|>`) come from
 `tokenizer.json`. `<|im_end|>` is the practical stop token for chat.
+
+## Where the files come from
+
+```bash
+# Checkpoint (about 1 GB) -> models/qwen2.5-0.5b/ : config.json, model.safetensors,
+# tokenizer.json, merges.txt, vocab.json from https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct
+
+# Optional, only for the llama.cpp reference point in scripts/bench.sh
+# (official GGUFs -> models/gguf/, gitignored): qwen2.5-0.5b-instruct-fp16.gguf and
+# qwen2.5-0.5b-instruct-q8_0.gguf from https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF
+brew install llama.cpp
+```

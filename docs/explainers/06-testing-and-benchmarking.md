@@ -13,13 +13,14 @@ Code: [`crates/model/src/bin/parity.rs`](../../crates/model/src/bin/parity.rs),
    *our* error from *its* error.
 2. **Parity bin.** Runs our forward pass on the same tokens and compares all 24 layers'
    intermediates plus logits. Metric is **max-abs for diagnosis, relative for the pass/fail
-   gate** (5e-5): the first, absolute `1e-4` tolerance was unsatisfiable because logits reach
-   magnitude ~19, where one f32 ulp is 2^-19 ≈ 1.9e-6 (the parity bin reports its error in
-   ulps: 2.86e-5 absolute = 15 ulps) (D14). A mean metric is never used —
+   gate** (5e-5). The original absolute `1e-4` target was dropped as unsatisfiable (CLAUDE.md
+   records why); absolute error scales with logit magnitude (up to ~19, where one f32 ulp is
+   2^-19 ≈ 1.9e-6 — the parity bin reports error in ulps: 2.86e-5 absolute = 15 ulps), so a
+   relative gate is the one that means the same thing at every magnitude. A mean metric is never used —
    it hides one catastrophically wrong element among thousands.
 3. **Localisation.** Because every layer is compared, a divergence is pinned to a layer and
-   an op ("first divergence at layer 3 `rope_q`") instead of "logits are wrong". Five real
-   bugs were found this way (D14–D18).
+   an op ("first divergence at layer 3 `rope_q`") instead of "logits are wrong". Real
+   bugs were found this way (see CLAUDE.md and D17–D18).
 4. **Every optimisation re-runs it.** Thread pool: still 1.482e-6 (bit-identical).
    NEON: 1.78e-6, within the gate, plus unit tests of the kernel against the scalar f64
    oracle on ragged lengths (1, 15, 16, 17, 255, 256, 257, 4871…).

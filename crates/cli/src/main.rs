@@ -312,7 +312,7 @@ fn run() -> Result<(), CliError> {
             decode_steps as f64 / decode_time.as_secs_f64().max(1e-9),
         );
         eprintln!(
-            "NOTE: these are single-run wall times from an unoptimised scalar build. \
+            "NOTE: these are single-run wall times, not statistics. \
              They are NOT benchmark numbers — see docs/BENCHMARKS.md and scripts/bench.sh."
         );
         if let Some(dec) = constrained.as_ref() {

@@ -46,8 +46,8 @@ llama.cpp, int8 weights loading with a recorded perplexity delta.**
 - [x] KV cache — allocation, layout, incremental decode. This is where prefill and
       decode become different code paths.
 - [x] Sampling: greedy, temperature, top-k, top-p. Seeded and reproducible.
-- [ ] Optimize the matmul. Blocking/tiling first, then SIMD. Re-run parity after
-      *every* change.
+- [x] Optimize the matmul. Blocking/tiling first, then SIMD. Re-run parity after
+      *every* change. (Thread pool D22, tiling + NEON D23; parity 1.78e-6.)
 - [x] int8 symmetric per-channel weight quantization: scale computation, packing,
       dequant-on-the-fly matmul.
 - [x] Measure: prefill tok/s, decode tok/s, peak RSS, fp32 vs int8.
@@ -88,14 +88,14 @@ running one script, and a writeup you could hand to an interviewer.**
 
 - [x] `scripts/bench.sh` — the single source of every number, with warmup, n≥10 runs,
       median and p95.
-- [ ] Head-to-head vs. llama.cpp: same model, same quantization, same machine, stated
+- [x] Head-to-head vs. llama.cpp (reference point, caveats in BENCHMARKS.md): same model, same quantization, same machine, stated
       methodology.
-- [ ] The comparison that matters: valid-JSON rate constrained vs. prompted-only, plus
+- [x] The comparison that matters: valid-JSON rate constrained vs. prompted-only, plus
       the tok/s cost of masking.
-- [ ] Error types replacing panics. `clippy` clean.
-- [ ] README results table. `docs/WRITEUP.md` — what was hard, what you got wrong,
+- [x] Error types replacing panics (D24). `clippy` clean.
+- [x] README results table. `docs/WRITEUP.md` — what was hard, what you got wrong,
       what you'd do differently. **Include the negative results.**
-- [ ] A 60-second screen recording. Prompt in, constrained JSON out, live.
+- [ ] A 60-second screen recording (`scripts/demo.sh` + `docs/readme/demo.tape` ready). Prompt in, constrained JSON out, live.
 
 **The trap:** running out of time and skipping the writeup. The writeup is the part
 that converts the work into a job. Protect week 4 by cutting week 2 and 3 scope, not
