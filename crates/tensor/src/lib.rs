@@ -10,6 +10,7 @@
 //! that takes 90 seconds per token is a pass if the numbers are right.
 
 pub mod ops;
+pub mod pool;
 pub mod quant;
 
 /// A row-major, contiguous `f32` tensor.

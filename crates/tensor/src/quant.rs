@@ -151,11 +151,7 @@ fn par_linear_q(
     k: usize,
     out: &mut [f32],
 ) {
-    let threads = std::thread::available_parallelism()
-        .map(|p| p.get())
-        .unwrap_or(1)
-        .min(n)
-        .max(1);
+    let threads = crate::pool::threads().min(n).max(1);
 
     if threads == 1 || m * n * k < 1 << 16 {
         dot_block_q(xd, wd, scales, m, k, 0, n, out, n);
@@ -163,28 +159,29 @@ fn par_linear_q(
     }
 
     let chunk = n.div_ceil(threads);
-    let mut scratches: Vec<Vec<f32>> = (0..threads)
+    // One private scratch per task; each is locked exactly once, by its own task,
+    // so the mutex is uncontended — it is only there to hand `&mut` to a `Fn`.
+    let scratches: Vec<std::sync::Mutex<Vec<f32>>> = (0..threads)
         .map(|t| {
             let lo = (t * chunk).min(n);
             let hi = ((t + 1) * chunk).min(n);
-            vec![0.0f32; m * hi.saturating_sub(lo)]
+            std::sync::Mutex::new(vec![0.0f32; m * hi.saturating_sub(lo)])
         })
         .collect();
 
-    std::thread::scope(|s| {
-        for (t, scratch) in scratches.iter_mut().enumerate() {
-            let lo = (t * chunk).min(n);
-            let hi = ((t + 1) * chunk).min(n);
-            if lo >= hi {
-                continue;
-            }
-            s.spawn(move || {
-                dot_block_q(xd, wd, scales, m, k, lo, hi, scratch, hi - lo);
-            });
+    // Persistent pool, not `thread::scope` (D22): no per-call thread spawn.
+    crate::pool::parallel_for(threads, &|t| {
+        let lo = (t * chunk).min(n);
+        let hi = ((t + 1) * chunk).min(n);
+        if lo >= hi {
+            return;
         }
+        let mut scratch = scratches[t].lock().unwrap();
+        dot_block_q(xd, wd, scales, m, k, lo, hi, &mut scratch, hi - lo);
     });
 
     for (t, scratch) in scratches.iter().enumerate() {
+        let scratch = scratch.lock().unwrap();
         let lo = (t * chunk).min(n);
         let hi = ((t + 1) * chunk).min(n);
         if lo >= hi {
