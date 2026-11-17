@@ -1,0 +1,18 @@
+[package]
+name = "grammar"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+# No ML libraries, per docs/RULES.md hard rule 1. Nothing here implements a tensor
+# operation. `serde_json` is used for two things only: parsing the input JSON
+# Schema, and -- in tests -- being the independent oracle that validates our
+# output. It is never in the masking path.
+[dependencies]
+serde_json = "1"
+
+[dev-dependencies]
+
+[[bin]]
+name = "demo"
+path = "src/bin/demo.rs"
