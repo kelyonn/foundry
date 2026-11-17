@@ -18,16 +18,16 @@ Treat each `[ ]` below as "explained → coded → tested → reviewed," not jus
 **Checkpoint: `foundry run --prompt "The capital of France is"` produces logits that
 match HuggingFace within `1e-4` max absolute error, on all 24 layers.**
 
-- [ ] Download `Qwen2.5-0.5B-Instruct`, dump `config.json`, confirm every value in
+- [x] Download `Qwen2.5-0.5B-Instruct`, dump `config.json`, confirm every value in
       [MODEL.md](MODEL.md). Fix the doc where it's wrong.
-- [ ] `scripts/dump_reference.py` — run the HF model with forward hooks, save
+- [x] `scripts/dump_reference.py` — run the HF model with forward hooks, save
       per-layer activations and final logits as `.npy` for a fixed prompt set.
-- [ ] Parse the safetensors container (JSON header + raw tensor blob, memory-mapped).
-- [ ] Byte-level BPE tokenizer: load merges and vocab from `tokenizer.json`, encode,
+- [x] Parse the safetensors container (JSON header + raw tensor blob, memory-mapped).
+- [x] Byte-level BPE tokenizer: load merges and vocab from `tokenizer.json`, encode,
       decode, round-trip. Parity-check IDs against the reference dump.
-- [ ] Tensor primitives, scalar only: matmul, RMSNorm, softmax, SiLU, elementwise.
-- [ ] Qwen2 forward pass, single token, no cache. RoPE, GQA, SwiGLU, tied embeddings.
-- [ ] Layer-by-layer parity harness (see [TESTING.md](TESTING.md)).
+- [x] Tensor primitives, scalar only: matmul, RMSNorm, softmax, SiLU, elementwise.
+- [x] Qwen2 forward pass, single token, no cache. RoPE, GQA, SwiGLU, tied embeddings.
+- [x] Layer-by-layer parity harness (see [TESTING.md](TESTING.md)).
 
 **Do not optimize anything this week.** A scalar `f32` matmul that takes 90 seconds per
 token is a *pass* if the logits are right. Speed is week 2's problem.
@@ -43,15 +43,15 @@ lose three days. Every experienced person who has built this has lost those thre
 **Checkpoint: coherent multi-sentence generation, throughput measured against
 llama.cpp, int8 weights loading with a recorded perplexity delta.**
 
-- [ ] KV cache — allocation, layout, incremental decode. This is where prefill and
+- [x] KV cache — allocation, layout, incremental decode. This is where prefill and
       decode become different code paths.
-- [ ] Sampling: greedy, temperature, top-k, top-p. Seeded and reproducible.
+- [x] Sampling: greedy, temperature, top-k, top-p. Seeded and reproducible.
 - [ ] Optimize the matmul. Blocking/tiling first, then SIMD. Re-run parity after
       *every* change.
-- [ ] int8 symmetric per-channel weight quantization: scale computation, packing,
+- [x] int8 symmetric per-channel weight quantization: scale computation, packing,
       dequant-on-the-fly matmul.
-- [ ] Measure: prefill tok/s, decode tok/s, peak RSS, fp32 vs int8.
-- [ ] Perplexity harness on a wikitext-2 subset to quantify the quantization cost.
+- [x] Measure: prefill tok/s, decode tok/s, peak RSS, fp32 vs int8.
+- [x] Perplexity harness on a wikitext-2 subset to quantify the quantization cost.
 
 **The trap:** claiming a speedup you didn't measure properly. Read
 [BENCHMARKS.md](BENCHMARKS.md) *before* you produce the first number, not after.
@@ -63,15 +63,15 @@ llama.cpp, int8 weights loading with a recorded perplexity delta.**
 **Checkpoint: 500 consecutive generations against a JSON Schema, 100% parse
 successfully. Not 99.6%.**
 
-- [ ] Grammar frontend: JSON Schema → intermediate grammar → regex/EBNF.
-- [ ] Compile to a DFA **over bytes**, not characters. See [GRAMMAR.md](GRAMMAR.md)
+- [x] Grammar frontend: JSON Schema → intermediate grammar → regex/EBNF.
+- [x] Compile to a DFA **over bytes**, not characters. See [GRAMMAR.md](GRAMMAR.md)
       for why this is not a detail.
-- [ ] Vocabulary index: for each DFA state, the set of token IDs that can be emitted
+- [x] Vocabulary index: for each DFA state, the set of token IDs that can be emitted
       without leaving the language. Built lazily and cached.
-- [ ] Logit masking in the sampling loop; DFA state advanced by the chosen token.
-- [ ] Handle the hard cases: tokens spanning multiple states, the EOS-only-in-accepting
+- [x] Logit masking in the sampling loop; DFA state advanced by the chosen token.
+- [x] Handle the hard cases: tokens spanning multiple states, the EOS-only-in-accepting
       -states rule, and unreachable-state detection.
-- [ ] Adversarial validation — schemas with nested objects, arrays, enums, numbers
+- [x] Adversarial validation — schemas with nested objects, arrays, enums, numbers
       with constraints. Every generation goes through a real JSON parser.
 
 **The trap:** treating the DFA as character-level because the schema is text. The
@@ -86,7 +86,7 @@ non-ASCII input — i.e. in the demo, in front of someone.
 **Checkpoint: a filled-in results table in the README, every number reproducible by
 running one script, and a writeup you could hand to an interviewer.**
 
-- [ ] `scripts/bench.sh` — the single source of every number, with warmup, n≥10 runs,
+- [x] `scripts/bench.sh` — the single source of every number, with warmup, n≥10 runs,
       median and p95.
 - [ ] Head-to-head vs. llama.cpp: same model, same quantization, same machine, stated
       methodology.
