@@ -1,0 +1,13 @@
+[package]
+name = "tokenizer"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+# JSON parsing only. The BPE merge loop, the byte-level alphabet and the
+# pre-tokenizer split are all implemented here — no regex crate, no tokenizers crate.
+[dependencies]
+serde_json = "1"
+
+[dev-dependencies]
+serde_json = "1"
