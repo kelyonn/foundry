@@ -1,0 +1,21 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+default-run = "foundry"
+
+[lib]
+name = "cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "foundry"
+path = "src/main.rs"
+
+[dependencies]
+grammar = { path = "../grammar" }
+model = { path = "../model" }
+tensor = { path = "../tensor" }
+tokenizer = { path = "../tokenizer" }
+serde_json = "1"
