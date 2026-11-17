@@ -1,6 +1,9 @@
 //! The one piece of `foundry`'s logic that needs to be independently testable
 //! rather than living inline in `main`: masking the padding tail of a logit row.
 
+pub mod error;
+pub use error::{or_exit, CliError};
+
 /// Set every logit at or beyond `vocab_size` to `-inf`, in place.
 ///
 /// # The bug this fixes

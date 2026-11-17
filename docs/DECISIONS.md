@@ -499,5 +499,31 @@ a real next step, not a quiet change here).
 
 ---
 
-### D24 — *(next decision goes here)*
+### D24 — Typed errors at the boundary; invariant asserts stay asserts
+**decided** — 2026-11-17
+
+The library crates already returned typed errors for everything input-driven
+(`ConfigError`, `LoadError`, `TokenizerError`, `SchemaError`, `DecodeError`). The
+remaining gaps were in the binaries: `.expect()` on file loading in `bench`,
+`perplexity`, `json_compare`, and `main`, and — worse — flag parsing that used
+`.parse().unwrap_or(default)`, so `--max-tokens abc` silently ran with 32.
+
+Now: `cli::CliError` gathers the library errors; `foundry`'s `main` is
+`run() -> Result<(), CliError>`; exit code 2 for usage errors, 1 for failures;
+flag values are parsed strictly. The measurement bins use `cli::or_exit`.
+
+Kept as panics on purpose: shape/length `assert!`s in `tensor` and `model` (a
+mismatched matmul is a bug in this code, not bad input) and the empty-prompt /
+KV-capacity asserts in `forward_cached`, whose preconditions the CLI checks first.
+`model`'s `parity` bin still uses `expect` — it is a test harness and `model`
+cannot depend on `cli`.
+
+*Rejected:* `thiserror`/`anyhow` (a `Display` impl is eight lines and the
+dependency budget is part of the pitch); turning the forward-pass asserts into
+`Result` (touches every call site and test to report conditions that cannot occur
+through the CLI).
+
+---
+
+### D25 — *(next decision goes here)*
 **open**

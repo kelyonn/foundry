@@ -80,9 +80,9 @@ fn main() {
         },
     };
 
-    let cfg = Config::from_file(format!("{dir}/config.json")).expect("config");
-    let st = SafeTensors::open(format!("{dir}/model.safetensors")).expect("weights");
-    let tk = Tokenizer::from_file(format!("{dir}/tokenizer.json")).expect("tokenizer");
+    let cfg = cli::or_exit(Config::from_file(format!("{dir}/config.json")));
+    let st = cli::or_exit(SafeTensors::open(format!("{dir}/model.safetensors")));
+    let tk = cli::or_exit(Tokenizer::from_file(format!("{dir}/tokenizer.json")));
 
     let mut tokens = tk.encode(&text);
     tokens.truncate(max_tokens);
@@ -99,7 +99,7 @@ fn main() {
 
     let mut results = Vec::new();
     for &int8 in &[false, true] {
-        let weights = Weights::load_with(&st, &cfg, int8).expect("weights");
+        let weights = cli::or_exit(Weights::load_with(&st, &cfg, int8));
         let bytes = weights.size_bytes();
         let model = Model::new(cfg.clone(), weights);
         let ppl = perplexity(&model, &tokens);

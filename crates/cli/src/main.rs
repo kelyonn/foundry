@@ -7,6 +7,7 @@
 //! Hand-rolled argument parsing: the dependency budget in docs/RULES.md permits a CLI
 //! crate, but a dozen flags do not need one.
 
+use cli::CliError;
 use grammar::{ConstrainedDecoder, Grammar, VocabIndex};
 use model::forward::Model;
 use model::sampling::{Sampler, SamplingConfig};
@@ -47,34 +48,43 @@ impl Default for Args {
     }
 }
 
-fn parse_args() -> Args {
+/// Parse a flag's value strictly. The first version used `.parse().unwrap_or(32)`,
+/// so `--max-tokens abc` silently ran with 32 and `--temperature 0,7` silently ran
+/// greedy. A typo in a flag should be an error, not a different experiment.
+fn parse_num<T: std::str::FromStr>(flag: &str, value: &str) -> Result<T, CliError> {
+    value
+        .parse()
+        .map_err(|_| CliError::Usage(format!("{flag}: cannot parse {value:?}")))
+}
+
+fn parse_args() -> Result<Args, CliError> {
     let mut a = Args::default();
     let argv: Vec<String> = std::env::args().skip(1).collect();
     let mut i = 0;
     while i < argv.len() {
-        let next = |i: &mut usize| -> String {
-            *i += 1;
-            argv.get(*i).cloned().unwrap_or_else(|| {
-                eprintln!("missing value for {}", argv[*i - 1]);
-                std::process::exit(2);
-            })
+        let flag = argv[i].clone();
+        let mut next = || -> Result<String, CliError> {
+            i += 1;
+            argv.get(i)
+                .cloned()
+                .ok_or_else(|| CliError::Usage(format!("missing value for {flag}")))
         };
-        match argv[i].as_str() {
-            "--model" => a.model_dir = next(&mut i),
-            "--prompt" | "-p" => a.prompt = next(&mut i),
-            "--max-tokens" | "-n" => a.max_tokens = next(&mut i).parse().unwrap_or(32),
-            "--temperature" | "-t" => a.temperature = next(&mut i).parse().unwrap_or(0.0),
-            "--top-k" => a.top_k = next(&mut i).parse().ok(),
-            "--top-p" => a.top_p = next(&mut i).parse().ok(),
-            "--seed" => a.seed = next(&mut i).parse().unwrap_or(0xF0175D),
+        match flag.as_str() {
+            "--model" => a.model_dir = next()?,
+            "--prompt" | "-p" => a.prompt = next()?,
+            "--max-tokens" | "-n" => a.max_tokens = parse_num(&flag, &next()?)?,
+            "--temperature" | "-t" => a.temperature = parse_num(&flag, &next()?)?,
+            "--top-k" => a.top_k = Some(parse_num(&flag, &next()?)?),
+            "--top-p" => a.top_p = Some(parse_num(&flag, &next()?)?),
+            "--seed" => a.seed = parse_num(&flag, &next()?)?,
             "--chat" => a.chat = true,
-            "--schema" => a.schema = Some(next(&mut i)),
+            "--schema" => a.schema = Some(next()?),
             "--schema-file" => {
-                let path = next(&mut i);
-                a.schema = Some(std::fs::read_to_string(&path).unwrap_or_else(|e| {
-                    eprintln!("cannot read {path}: {e}");
-                    std::process::exit(2);
-                }));
+                let path = next()?;
+                a.schema = Some(
+                    std::fs::read_to_string(&path)
+                        .map_err(|e| CliError::Io(format!("cannot read {path}: {e}")))?,
+                );
             }
             "--int8" => a.int8 = true,
             "--quiet" | "-q" => a.show_stats = false,
@@ -83,13 +93,12 @@ fn parse_args() -> Args {
                 std::process::exit(0);
             }
             other => {
-                eprintln!("unknown flag {other}\n\n{USAGE}");
-                std::process::exit(2);
+                return Err(CliError::Usage(format!("unknown flag {other}\n\n{USAGE}")));
             }
         }
         i += 1;
     }
-    a
+    Ok(a)
 }
 
 const USAGE: &str = "\
@@ -121,7 +130,14 @@ fn apply_chat_template(prompt: &str) -> String {
 }
 
 fn main() {
-    let args = parse_args();
+    if let Err(e) = run() {
+        eprintln!("error: {e}");
+        std::process::exit(e.exit_code());
+    }
+}
+
+fn run() -> Result<(), CliError> {
+    let args = parse_args()?;
 
     // `"nan".parse::<f32>()` succeeds and produces NaN, which `unwrap_or` never
     // catches. Left unchecked this reaches `Sampler`, where `NaN <= 0.0` is false
@@ -130,28 +146,14 @@ fn main() {
     // panic, but a bad error message for what is actually invalid input. Caught
     // here, at the boundary, with a message that names the actual problem.
     if args.temperature.is_nan() {
-        eprintln!("--temperature is NaN");
-        std::process::exit(2);
+        return Err(CliError::Usage("--temperature is NaN".into()));
     }
 
     let t_load = std::time::Instant::now();
-    let cfg = match Config::from_file(format!("{}/config.json", args.model_dir)) {
-        Ok(c) => c,
-        Err(e) => {
-            eprintln!("{e}");
-            std::process::exit(1);
-        }
-    };
-    let st = match SafeTensors::open(format!("{}/model.safetensors", args.model_dir)) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("{e}");
-            std::process::exit(1);
-        }
-    };
-    let weights = Weights::load_with(&st, &cfg, args.int8).expect("weight layout");
-    let tk =
-        Tokenizer::from_file(format!("{}/tokenizer.json", args.model_dir)).expect("tokenizer.json");
+    let cfg = Config::from_file(format!("{}/config.json", args.model_dir))?;
+    let st = SafeTensors::open(format!("{}/model.safetensors", args.model_dir))?;
+    let weights = Weights::load_with(&st, &cfg, args.int8)?;
+    let tk = Tokenizer::from_file(format!("{}/tokenizer.json", args.model_dir))?;
     let load_time = t_load.elapsed();
 
     let text = if args.chat {
@@ -175,8 +177,9 @@ fn main() {
     // crates downstream. `--chat` can never trigger this: the template's control
     // tokens guarantee at least one id even for an empty `--prompt`.
     if prompt_ids.is_empty() {
-        eprintln!("--prompt is empty (or tokenizes to nothing); nothing to run");
-        std::process::exit(2);
+        return Err(CliError::Usage(
+            "--prompt is empty (or tokenizes to nothing); nothing to run".into(),
+        ));
     }
 
     if args.show_stats {
@@ -214,12 +217,11 @@ fn main() {
 
     // Constrained decoding, if a schema was given. The grammar's vocabulary is
     // built from the tokenizer we already loaded, so the two cannot disagree.
-    let grammar = args.schema.as_ref().map(|s| {
-        Grammar::from_schema_str(s).unwrap_or_else(|e| {
-            eprintln!("bad schema: {e}");
-            std::process::exit(2);
-        })
-    });
+    let grammar = args
+        .schema
+        .as_ref()
+        .map(|s| Grammar::from_schema_str(s).map_err(|e| CliError::Schema(e.to_string())))
+        .transpose()?;
     let gvocab = grammar.as_ref().map(|_| {
         let n = tk.vocab_size();
         let tokens: Vec<Vec<u8>> = (0..n as u32).map(|i| tk.bytes(i).to_vec()).collect();
@@ -259,10 +261,8 @@ fn main() {
         let row = &mut logits.data_mut()[(rows - 1) * vocab_width..];
 
         if let Some(dec) = constrained.as_mut() {
-            if let Err(e) = dec.apply_mask(row) {
-                eprintln!("\nconstrained decoding failed: {e}");
-                std::process::exit(1);
-            }
+            dec.apply_mask(row)
+                .map_err(|e| CliError::Generation(e.to_string()))?;
         } else {
             // No grammar active, so nothing else masks the padding tail between
             // the tokenizer's real vocabulary (151,665 ids) and the model's
@@ -278,10 +278,9 @@ fn main() {
         };
 
         if let Some(dec) = constrained.as_mut() {
-            if let Err(e) = dec.accept_token(next) {
-                eprintln!("\nautomaton rejected the sampled token: {e}");
-                std::process::exit(1);
-            }
+            dec.accept_token(next).map_err(|e| {
+                CliError::Generation(format!("automaton rejected the sampled token: {e}"))
+            })?;
             if dec.is_finished() {
                 break;
             }
@@ -333,9 +332,10 @@ fn main() {
         match serde_json::from_str::<serde_json::Value>(&out) {
             Ok(_) => eprintln!("output parses as JSON: yes"),
             Err(e) => {
-                eprintln!("output parses as JSON: NO — {e}");
-                std::process::exit(1);
+                eprintln!("output parses as JSON: NO");
+                return Err(CliError::InvalidOutput(e.to_string()));
             }
         }
     }
+    Ok(())
 }

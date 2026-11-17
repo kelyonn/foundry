@@ -199,10 +199,10 @@ fn main() {
         i += 1;
     }
 
-    let cfg = Config::from_file(format!("{model_dir}/config.json")).expect("config.json");
-    let st = SafeTensors::open(format!("{model_dir}/model.safetensors")).expect("safetensors");
-    let weights = Weights::load_with(&st, &cfg, int8).expect("weights");
-    let tk = Tokenizer::from_file(format!("{model_dir}/tokenizer.json")).expect("tokenizer");
+    let cfg = cli::or_exit(Config::from_file(format!("{model_dir}/config.json")));
+    let st = cli::or_exit(SafeTensors::open(format!("{model_dir}/model.safetensors")));
+    let weights = cli::or_exit(Weights::load_with(&st, &cfg, int8));
+    let tk = cli::or_exit(Tokenizer::from_file(format!("{model_dir}/tokenizer.json")));
     let model = Model::new(cfg, weights);
 
     let vocab = {

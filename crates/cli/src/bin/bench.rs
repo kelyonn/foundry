@@ -104,12 +104,12 @@ fn main() {
 
     assert!(runs >= 10, "docs/BENCHMARKS.md requires n >= 10");
 
-    let cfg = Config::from_file(format!("{dir}/config.json")).expect("config");
-    let st = SafeTensors::open(format!("{dir}/model.safetensors")).expect("weights");
-    let tk = Tokenizer::from_file(format!("{dir}/tokenizer.json")).expect("tokenizer");
+    let cfg = cli::or_exit(Config::from_file(format!("{dir}/config.json")));
+    let st = cli::or_exit(SafeTensors::open(format!("{dir}/model.safetensors")));
+    let tk = cli::or_exit(Tokenizer::from_file(format!("{dir}/tokenizer.json")));
 
     let t0 = Instant::now();
-    let weights = Weights::load_with(&st, &cfg, int8).expect("weight layout");
+    let weights = cli::or_exit(Weights::load_with(&st, &cfg, int8));
     let load_time = t0.elapsed();
     let weight_bytes = weights.size_bytes();
 
