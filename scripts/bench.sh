@@ -26,7 +26,7 @@ if [[ ! -f "$MODEL/model.safetensors" ]]; then
 fi
 
 echo "building --release ..."
-cargo build --release -q -p cli
+cargo build --release -q -p cli --bins
 
 echo
 echo "================================================================"
@@ -47,6 +47,13 @@ for PRECISION in f32 int8; do
     --decode-tokens "$DECODE_TOKENS" \
     $FLAG
 done
+
+echo
+echo "################ constrained vs prompted-only JSON ################"
+JSON_N=100
+[[ "${1:-}" == "--quick" ]] && JSON_N=20
+./target/release/json_compare --model "$MODEL" --n "$JSON_N"
+./target/release/json_compare --model "$MODEL" --n "$JSON_N" --int8
 
 echo
 echo "################ correctness gate ################"
